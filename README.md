@@ -10,7 +10,7 @@ your own apps by dropping an `.apk` on the window (x86/x86_64 only).
 
 ## Install
 
-Run **`Install-Posaba.exe`** ([v1 release](../../releases/tag/v1)) — a ~55 KB
+Run **`Install-Posaba.exe`** ([v1 release](../../releases/tag/v1)) — a ~52 KB
 launcher. It downloads the bundle (~1 GB) from the release, extracts it, adds a
 Desktop + Start Menu shortcut, and offers to launch. First emulator boot takes
 ~2 minutes while it installs the apps.
