@@ -57,9 +57,9 @@ if exist "%APK%" (
     )
 )
 
-rem --- Re-add the sideloaded home-screen apps (Posaba calculator, Downloader,
-rem     APKPure). A -no-snapshot boot wipes every app except Posaba TV, so this
-rem     runs each launch: installs from .\apps\ if missing + pins the icons. ---
+rem --- Install the Posaba calculator + pin both Posaba icons to the home
+rem     screen. A -no-snapshot boot wipes every app except Posaba TV, so this
+rem     runs each launch: installs apps\posaba.apk if missing + pins the icons. ---
 powershell -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "%ROOT%emu-apps.ps1" -Adb "%ADB%" -Serial %SERIAL%
 
 rem --- (font bump is applied inside emu-apps.ps1, which retries until it sticks) ---

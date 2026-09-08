@@ -10,13 +10,16 @@ TO RUN
 Double-click  "Start Posaba.exe"
 
 The emulator opens in a big landscape window filling your main monitor
-(first boot takes a minute or two; quicker after that). Posaba TV, the
-Posaba calculator, Downloader and APKPure are put on the emulator
-automatically and pinned to the home screen - then open them from there.
-Close the window to stop it.
+(first boot takes a minute or two; quicker after that). Posaba TV and the
+Posaba calculator are put on the emulator automatically and pinned to the
+home screen - then open them from there. Close the window to stop it.
 
 There is no console window, and no app is opened for you - the launcher
 only starts the emulator and makes sure the apps are on it.
+
+This is a plain Android build with no Google apps and no Play Store. To
+add your own apps, copy an .apk onto the emulator window (or use adb) -
+x86/x86_64 APKs only; ARM-only apps will not install.
 
 
 ON-SCREEN CONTROLS
@@ -76,11 +79,9 @@ WHAT'S INSIDE
   app-debug.apk                 Posaba TV (installed on first boot;
                                 keep it here to reinstall a newer build)
   apps\posaba.apk               the Posaba calculator
-  apps\apkpure.apk              APKPure
-  apps\downloader\              Downloader (AFTVnews)
   sdk\emulator\                 Android emulator
   sdk\platform-tools\           adb
-  sdk\system-images\            Android 14 (API 34) x86_64
+  sdk\system-images\            Android 14 (API 34) x86_64, plain AOSP
   avd\Dissolvers.avd\           the virtual device (Resizable device type)
 
 

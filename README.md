@@ -1,24 +1,21 @@
 # Posaba Android Emulator
 
 A portable Android emulator bundle preloaded with **Posaba TV** (the IPTV
-player) and the **Posaba calculator** — both pinned to the home screen next to
-Downloader and APKPure.
+player) and the **Posaba calculator** — both pinned to the home screen.
+
+It runs plain AOSP Android 14: no Google apps, no Play Store, no ads. Add
+your own apps by dropping an `.apk` on the window (x86/x86_64 only).
 
 *(This repo was `dissolvers-emulator`; old links redirect here.)*
 
 ## Install
 
-Run **`Install-Posaba.exe`** ([v1 release](../../releases/tag/v1)). It downloads
-the bundle, extracts it, adds a Desktop + Start Menu shortcut, and offers to
-launch. First emulator boot takes ~2 minutes while it installs the apps.
+Run **`Install-Posaba.exe`** ([v1 release](../../releases/tag/v1)) — a ~55 KB
+launcher. It downloads the bundle (~1 GB) from the release, extracts it, adds a
+Desktop + Start Menu shortcut, and offers to launch. First emulator boot takes
+~2 minutes while it installs the apps.
 
-| | download from here | download from Google | total |
-|---|---|---|---|
-| **Full** (`Install-Posaba.exe`) | ~1.9 GB | — | ~1.9 GB |
-| **Lite** (`Install-Posaba.exe --lite`) | ~66 MB | ~2 GB (emulator + Android 14) | ~2 GB |
-
-Lite keeps *our* download tiny; the big Android pieces come straight from
-`dl.google.com`. `PosabaTV.apk` is also attached on its own (no emulator).
+`PosabaTV.apk` is also attached on its own (no emulator).
 
 ## What's in this repo
 
@@ -29,7 +26,7 @@ Lite keeps *our* download tiny; the big Android pieces come straight from
   (`make-lean-zip.ps1`, `make-posaba-ico.ps1`, `render-icons.ps1`).
 
 The emulator binaries, system image and the AVD are **not** in git — they're in
-the release zip (Full) or fetched from Google (Lite).
+the release zip.
 
 ## Publishing an update
 
