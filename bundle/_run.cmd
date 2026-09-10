@@ -67,23 +67,25 @@ if exist "%APK%" (
     )
 )
 
-rem --- Install the Posaba calculator + pin both Posaba icons to the home
-rem     screen. A -no-snapshot boot wipes every app except Posaba TV, so this
-rem     runs each launch: installs apps\posaba.apk if missing + pins the icons.
-rem     Run through _hidden.vbs so no PowerShell window ever appears. ---
-wscript //nologo "%ROOT%_hidden.vbs" "%ROOT%emu-apps.ps1" -Adb "%ADB%" -Serial %SERIAL%
-
-rem --- (font bump is applied inside emu-apps.ps1, which retries until it sticks) ---
-
 rem --- Stop the resizable device auto-rotating on its own. Leave user-rotation
 rem     "free" so the Rotate button (emulator's own rotate) still works. ---
 "%ADB%" -s %SERIAL% shell settings put system accelerometer_rotation 0 >nul 2>&1
 "%ADB%" -s %SERIAL% shell wm user-rotation free >nul 2>&1
 
-rem --- Open big: switch to the large landscape layout and fill the monitor.
-rem     Detached (via _hidden.vbs) so it still runs after this script exits and
-rem     never shows a PowerShell window. ---
-start "" wscript //nologo "%ROOT%_hidden.vbs" "%ROOT%emu-window.ps1" big -Adb "%ADB%" -Serial %SERIAL%
+rem --- Open big FIRST: switch to the large landscape layout and fill the
+rem     monitor. Doing this before emu-apps.ps1 means the home-screen grid is
+rem     the tablet 6x5 and stable before we edit the launcher DB - otherwise
+rem     the display-size change spawns a fresh grid DB that NexusLauncher
+rem     crashes on (black screen). Run through _hidden.vbs = no window. ---
+wscript //nologo "%ROOT%_hidden.vbs" "%ROOT%emu-window.ps1" big -Adb "%ADB%" -Serial %SERIAL%
+
+rem --- Install the Posaba calculator + Downloader + APKPure and pin the four
+rem     app icons to the home screen. A -no-snapshot boot wipes every app
+rem     except Posaba TV, so this runs each launch: installs from apps\ if
+rem     missing + pins the icons. Also disables the Play Store stub. ---
+wscript //nologo "%ROOT%_hidden.vbs" "%ROOT%emu-apps.ps1" -Adb "%ADB%" -Serial %SERIAL%
+
+rem --- (font bump is applied inside emu-apps.ps1, which retries until it sticks) ---
 
 rem --- Custom vertical control strip on the window's right edge (back, home,
 rem     recents, close-app, volume, rotate, screenshot, fill, power, quit).
