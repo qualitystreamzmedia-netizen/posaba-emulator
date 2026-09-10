@@ -53,26 +53,40 @@ static class PosabaWebInstaller
 
     static void RunInstall()
     {
-        string target;
-        using (var fbd = new FolderBrowserDialog
+        string target = null;
+        while (true)
         {
-            Description = "Choose where to install " + AppName +
-                          " (a \"" + FolderName + "\" folder is created inside).",
-            ShowNewFolderButton = true,
-        })
-        {
-            if (fbd.ShowDialog() != DialogResult.OK) return;
-            target = Path.Combine(fbd.SelectedPath, FolderName);
+            using (var fbd = new FolderBrowserDialog
+            {
+                Description = "Choose where to install " + AppName + "  (a \"" + FolderName +
+                              "\" folder is made inside).\r\n" +
+                              "Use a local folder - NOT OneDrive, Dropbox or Program Files.",
+                ShowNewFolderButton = true,
+                SelectedPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+            })
+            {
+                if (fbd.ShowDialog() != DialogResult.OK) return;
+                string why = BadLocation(fbd.SelectedPath);
+                if (why != null)
+                {
+                    MessageBox.Show(why + "\r\n\r\nGood choices: your Downloads folder, or a new " +
+                        "folder you\r\nmake on the C: drive (for example  C:\\Apps).",
+                        AppName, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    continue;
+                }
+                target = Path.Combine(fbd.SelectedPath, FolderName);
+            }
+            break;
         }
         Directory.CreateDirectory(target);
 
         BuildForm("Installing " + AppName + "...");
         var t = new Thread(() =>
         {
+            string zip = null;
             try
             {
-                string zip = Path.Combine(Path.GetTempPath(), "PosabaEmulator.zip");
-                Download(BUNDLE_URL, zip, "Downloading...");
+                zip = EnsureZip(BUNDLE_URL);
                 Status("Extracting...");
                 ExtractFlatten(zip, target);
                 try { File.Delete(zip); } catch { }
@@ -80,9 +94,16 @@ static class PosabaWebInstaller
             }
             catch (Exception ex)
             {
+                bool locky = ex is UnauthorizedAccessException || ex is IOException;
+                string extra = locky
+                    ? "\r\n\r\nThis usually means the folder is locked by cloud sync " +
+                      "(OneDrive / Dropbox)\r\nor needs administrator rights. Install into your " +
+                      "Downloads folder\r\nor a new folder on C: instead."
+                    : "";
+                // keep the downloaded zip so a retry doesn't re-download 1 GB
                 _form.Invoke((Action)(() =>
                 {
-                    MessageBox.Show(_form, "Install failed:\n\n" + ex.Message, AppName,
+                    MessageBox.Show(_form, "Install failed:\r\n\r\n" + ex.Message + extra, AppName,
                         MessageBoxButtons.OK, MessageBoxIcon.Error);
                     Application.Exit();
                 }));
@@ -90,6 +111,80 @@ static class PosabaWebInstaller
         }) { IsBackground = true };
         _form.Shown += (s, e) => t.Start();
         Application.Run(_form);
+    }
+
+    // Reject cloud-synced folders (sync locks files mid-extract and would upload
+    // the whole ~3 GB bundle) and protected system folders, and check we can write.
+    static string BadLocation(string path)
+    {
+        string p;
+        try { p = Path.GetFullPath(path); } catch { return "That path is not valid."; }
+        string low = p.ToLowerInvariant();
+
+        string[] synced = { "onedrive", "dropbox", "google drive", "\\my drive",
+                            "\\box\\", "\\box sync", "icloud", "creative cloud files" };
+        foreach (var s in synced)
+            if (low.Contains(s))
+                return "That folder is inside a cloud-sync folder (" + s.Trim('\\') + ").\r\n" +
+                       "Sync locks files while uploading, which breaks the install.";
+
+        foreach (var ev in new[] { "OneDrive", "OneDriveCommercial", "OneDriveConsumer" })
+            if (UnderOrIs(low, Environment.GetEnvironmentVariable(ev)))
+                return "That folder is inside OneDrive.";
+
+        foreach (var sf in new[] { Environment.SpecialFolder.ProgramFiles,
+                                   Environment.SpecialFolder.ProgramFilesX86,
+                                   Environment.SpecialFolder.Windows })
+            if (UnderOrIs(low, Environment.GetFolderPath(sf)))
+                return "That is a protected system folder (it needs administrator rights).";
+
+        try
+        {
+            Directory.CreateDirectory(p);
+            string probe = Path.Combine(p, ".posaba_write_test");
+            File.WriteAllText(probe, "ok");
+            File.Delete(probe);
+        }
+        catch { return "This folder can't be written to (try Downloads, or a folder you make on C:)."; }
+
+        return null;
+    }
+
+    static bool UnderOrIs(string lowFullPath, string baseDir)
+    {
+        if (string.IsNullOrEmpty(baseDir)) return false;
+        string b = baseDir.ToLowerInvariant().TrimEnd('\\');
+        return lowFullPath == b || lowFullPath.StartsWith(b + "\\");
+    }
+
+    // Use an already-downloaded %TEMP%\PosabaEmulator.zip if it is the right size.
+    static string EnsureZip(string url)
+    {
+        string zip = Path.Combine(Path.GetTempPath(), "PosabaEmulator.zip");
+        long remote = RemoteSize(url);
+        if (remote > 0 && File.Exists(zip) && new FileInfo(zip).Length == remote)
+        {
+            Status("Using the copy already downloaded...");
+            if (_form != null) _form.BeginInvoke((Action)(() => _bar.Value = 100));
+            return zip;
+        }
+        Download(url, zip, "Downloading...");
+        return zip;
+    }
+
+    static long RemoteSize(string url)
+    {
+        try
+        {
+            var r = (HttpWebRequest)WebRequest.Create(url);
+            r.Method = "HEAD";
+            r.AllowAutoRedirect = true;
+            r.UserAgent = "PosabaInstaller";
+            r.Proxy = null;
+            using (var resp = (HttpWebResponse)r.GetResponse())
+                return resp.ContentLength;
+        }
+        catch { return -1; }
     }
 
     // ---- helpers -------------------------------------------------------
@@ -132,16 +227,19 @@ static class PosabaWebInstaller
     static void ExtractFlatten(string zip, string target)
     {
         string tmp = target + "__x";
-        if (Directory.Exists(tmp)) Directory.Delete(tmp, true);
-        ZipFile.ExtractToDirectory(zip, tmp);
-        var roots = Directory.GetDirectories(tmp);
-        var files = Directory.GetFiles(tmp);
-        string from = (roots.Length == 1 && files.Length == 0) ? roots[0] : tmp;
-        foreach (var d in Directory.GetDirectories(from))
-            MoveMerge(d, Path.Combine(target, Path.GetFileName(d)));
-        foreach (var f in Directory.GetFiles(from))
-            File.Copy(f, Path.Combine(target, Path.GetFileName(f)), true);
-        Directory.Delete(tmp, true);
+        try
+        {
+            if (Directory.Exists(tmp)) Directory.Delete(tmp, true);
+            ZipFile.ExtractToDirectory(zip, tmp);
+            var roots = Directory.GetDirectories(tmp);
+            var files = Directory.GetFiles(tmp);
+            string from = (roots.Length == 1 && files.Length == 0) ? roots[0] : tmp;
+            foreach (var d in Directory.GetDirectories(from))
+                MoveMerge(d, Path.Combine(target, Path.GetFileName(d)));
+            foreach (var f in Directory.GetFiles(from))
+                File.Copy(f, Path.Combine(target, Path.GetFileName(f)), true);
+        }
+        finally { try { if (Directory.Exists(tmp)) Directory.Delete(tmp, true); } catch { } }
     }
 
     static void MoveMerge(string from, string to)
