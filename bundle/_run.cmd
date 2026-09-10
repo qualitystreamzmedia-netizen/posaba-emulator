@@ -69,8 +69,9 @@ if exist "%APK%" (
 
 rem --- Install the Posaba calculator + pin both Posaba icons to the home
 rem     screen. A -no-snapshot boot wipes every app except Posaba TV, so this
-rem     runs each launch: installs apps\posaba.apk if missing + pins the icons. ---
-powershell -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "%ROOT%emu-apps.ps1" -Adb "%ADB%" -Serial %SERIAL%
+rem     runs each launch: installs apps\posaba.apk if missing + pins the icons.
+rem     Run through _hidden.vbs so no PowerShell window ever appears. ---
+wscript //nologo "%ROOT%_hidden.vbs" "%ROOT%emu-apps.ps1" -Adb "%ADB%" -Serial %SERIAL%
 
 rem --- (font bump is applied inside emu-apps.ps1, which retries until it sticks) ---
 
@@ -80,12 +81,13 @@ rem     "free" so the Rotate button (emulator's own rotate) still works. ---
 "%ADB%" -s %SERIAL% shell wm user-rotation free >nul 2>&1
 
 rem --- Open big: switch to the large landscape layout and fill the monitor.
-rem     Detached so it still runs if this window is closed first. ---
-start "" powershell -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "%ROOT%emu-window.ps1" big -Adb "%ADB%" -Serial %SERIAL%
+rem     Detached (via _hidden.vbs) so it still runs after this script exits and
+rem     never shows a PowerShell window. ---
+start "" wscript //nologo "%ROOT%_hidden.vbs" "%ROOT%emu-window.ps1" big -Adb "%ADB%" -Serial %SERIAL%
 
 rem --- Custom vertical control strip on the window's right edge (back, home,
 rem     recents, close-app, volume, rotate, screenshot, fill, power, quit).
 rem     Hides the emulator's own toolbar and stands in for it. ---
-start "" powershell -NoProfile -Sta -WindowStyle Hidden -ExecutionPolicy Bypass -File "%ROOT%emu-zoom-button.ps1" -Adb "%ADB%" -Serial %SERIAL%
+start "" wscript //nologo "%ROOT%_hidden.vbs" "%ROOT%emu-zoom-button.ps1" -Adb "%ADB%" -Serial %SERIAL%
 
 endlocal
