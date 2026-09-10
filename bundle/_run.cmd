@@ -20,10 +20,17 @@ rem --- Point the virtual device at wherever this folder currently is ---
     echo target=android-34
 )
 
+rem --- First launch after extraction: wipe the data/cache partitions so a
+rem     stale or partially-shipped bundle can't hang forever at boot (a data
+rem     image left over from a different system image will never mount). The
+rem     marker file below makes this a one-time thing. ---
+set "FIRSTRUN="
+if not exist "%ROOT%avd\.posaba-initialised" set "FIRSTRUN=-wipe-data"
+
 rem --- Start the emulator if it isn't already running ---
 "%ADB%" -s %SERIAL% get-state >nul 2>&1
 if errorlevel 1 (
-    start "" /b "%EMU%" -avd Dissolvers -gpu swiftshader_indirect -no-snapshot -no-boot-anim
+    start "" /b "%EMU%" -avd Dissolvers -gpu swiftshader_indirect -no-snapshot -no-boot-anim %FIRSTRUN%
 )
 
 rem --- Wait for it to finish booting ---
@@ -35,6 +42,9 @@ if not "%BOOT%"=="1" (
     ping -n 4 -w 1000 127.0.0.1 >nul
     goto waitboot
 )
+
+rem --- Booted cleanly at least once: don't wipe again on future launches. ---
+> "%ROOT%avd\.posaba-initialised" echo %DATE% %TIME%
 
 rem --- Make sure Posaba TV is installed (it isn't launched - open it yourself) ---
 rem     Retry a few times - a very first boot can reject the install while the
