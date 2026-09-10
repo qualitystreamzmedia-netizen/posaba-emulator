@@ -17,7 +17,8 @@ $skip = @(
 )
 $skipFilePatterns = @(
   'userdata-qemu.img*', 'cache.img*', '*.qcow2', '*.lock',
-  'hardware-qemu.ini', 'emulator-user.ini', 'multiinstance.lock'
+  'hardware-qemu.ini', 'emulator-user.ini', 'multiinstance.lock',
+  '.posaba-initialised', 'emu-launch-params.txt', 'bootcompleted.ini'
 )
 
 function Skip($rel) {
