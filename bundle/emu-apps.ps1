@@ -83,7 +83,7 @@ DELETE FROM favorites WHERE intent LIKE '%com.google.android.gm/%' OR intent LIK
 DELETE FROM favorites WHERE container=-100 AND screen=0 AND cellY=3 AND cellX IN (0,1,2,3);
 INSERT INTO favorites ($cols) VALUES
  ('Posaba TV','$tvIntent',-100,0,0,3,1,1,0,-1,0,0,0,0,0,-1),
- ('Posaba','$pbIntent',-100,0,1,3,1,1,0,-1,0,0,0,0,0,-1),
+ ('Posaba Calculator','$pbIntent',-100,0,1,3,1,1,0,-1,0,0,0,0,0,-1),
  ('Downloader','$dlIntent',-100,0,2,3,1,1,0,-1,0,0,0,0,0,-1),
  ('APKPure','$ppIntent',-100,0,3,3,1,1,0,-1,0,0,0,0,0,-1);
 PRAGMA wal_checkpoint(TRUNCATE);
